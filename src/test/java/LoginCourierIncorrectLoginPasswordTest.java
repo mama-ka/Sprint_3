@@ -1,5 +1,4 @@
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,11 +15,14 @@ public class LoginCourierIncorrectLoginPasswordTest {
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
         courierCreateAndDelete = new CourierCreateAndDelete();
         courierCreateAndDelete.create(courier);
         CourierLogin bodyLogin = CourierLogin.from (courier);
-        courierId = courierCreateAndDelete.login(bodyLogin);
+        courierId = courierCreateAndDelete.login(bodyLogin)
+                .assertThat()
+                .statusCode(200)
+                .extract()
+                .path("id");
     }
     @After
     public void deletedCourier(){
@@ -32,7 +34,12 @@ public class LoginCourierIncorrectLoginPasswordTest {
     @DisplayName("Нельязя авторизоваться без Логина")
     public void authorizationCourierWithoutLoginCheckStatusCode400Error() {
         CourierLogin bodyLogin = new CourierLogin ("", courier.password);
-        message = courierCreateAndDelete.loginWithoutPasswordLogin (bodyLogin);
+        String message = courierCreateAndDelete.login (bodyLogin)
+                .assertThat()
+                .statusCode(400)
+                .extract()
+                .path("message");
+
         assertThat("Можно зарегестрироваться без логина", message, equalTo("Недостаточно данных для входа"));
     }
 
@@ -40,7 +47,11 @@ public class LoginCourierIncorrectLoginPasswordTest {
     @DisplayName("Нельязя авторизоваться без Пароля")
     public void authorizationCourierWithoutPasswordCheckStatusCode400Error() {
         CourierLogin bodyLogin = new CourierLogin (courier.login, "");
-        message = courierCreateAndDelete.loginWithoutPasswordLogin (bodyLogin);
+        String message = courierCreateAndDelete.login (bodyLogin)
+                .assertThat()
+                .statusCode(400)
+                .extract()
+                .path("message");
         assertThat("Можно зарегестрироваться без пароля", message, equalTo("Недостаточно данных для входа"));
 
     }
@@ -49,7 +60,11 @@ public class LoginCourierIncorrectLoginPasswordTest {
     @DisplayName("Нельязя авторизоваться с некорректным Логином")
     public void authorizationCourierIncorrectLoginCheckStatusCode404Error() {
         CourierLogin bodyLogin = new CourierLogin ("м", courier.password);
-        message = courierCreateAndDelete.incorrectLogin (bodyLogin);
+        message = courierCreateAndDelete.login (bodyLogin)
+                .assertThat()
+                .statusCode(404)
+                .extract()
+                .path("message");
         assertThat("Можно зарегестрироваться с некорректным логином", message, equalTo("Учетная запись не найдена"));
 
     }
@@ -57,7 +72,11 @@ public class LoginCourierIncorrectLoginPasswordTest {
     @DisplayName("Нельязя авторизоваться с некорректным Паролем")
     public void authorizationCourierIncorrectPasswordCheckStatusCode404Error() {
         CourierLogin bodyLogin = new CourierLogin (courier.login, "5");
-        message = courierCreateAndDelete.incorrectLogin (bodyLogin);
+        message = courierCreateAndDelete.login (bodyLogin)
+                .assertThat()
+                .statusCode(404)
+                .extract()
+                .path("message");
         assertThat("Можно зарегестрироваться с некорректным паролем", message, equalTo("Учетная запись не найдена"));
     }
 

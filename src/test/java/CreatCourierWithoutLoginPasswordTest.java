@@ -1,8 +1,6 @@
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
 import org.junit.Before;
 import org.junit.Test;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -11,7 +9,6 @@ public class CreatCourierWithoutLoginPasswordTest {
     private CourierCreateAndDelete courierCreateAndDelete;
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
         courierCreateAndDelete = new CourierCreateAndDelete();
     }
     @Test
@@ -19,7 +16,11 @@ public class CreatCourierWithoutLoginPasswordTest {
     public void creatCourierWithoutLoginCheckStatusCode400Error() {
         CourierRegister courier = new CourierRegister("", "1234", "Amm");
 
-        String withoutLogin = courierCreateAndDelete.dontCreate(courier);
+        String withoutLogin = courierCreateAndDelete.create(courier)
+                .assertThat()
+                .statusCode(400)
+                .extract()
+                .path("message");
         assertThat("Курьер создан без обязательного логина", withoutLogin, equalTo("Недостаточно данных для создания учетной записи"));
 
     }
@@ -28,7 +29,12 @@ public class CreatCourierWithoutLoginPasswordTest {
     public void creatCourierWithoutPasswordCheckStatusCode400Error() {
         CourierRegister courier = new CourierRegister("mag", "", "Amm");
 
-        String withoutPassword = courierCreateAndDelete.dontCreate(courier);
+        String withoutPassword = courierCreateAndDelete.create(courier)
+                .assertThat()
+                .statusCode(400)
+                .extract()
+                .path("message");
+
         assertThat("Курьер создан без обязательного пароля", withoutPassword, equalTo("Недостаточно данных для создания учетной записи"));
 
     }
